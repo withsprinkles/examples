@@ -1,0 +1,54 @@
+[tools]
+node = "24"
+pnpm = "latest"
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[hooks]
+postinstall = """
+if [ -z "$CI" ]; then
+  pnpm install
+fi
+"""
+
+[tasks.dev]
+depends = ["db:bootstrap"]
+run = "vite dev"
+
+[tasks.build]
+run = "vite build"
+
+[tasks.preview]
+run = "vite preview"
+
+[tasks.serve]
+run = "react-router-serve build/server/index.js"
+
+[tasks.fmt]
+run = "oxfmt"
+
+[tasks.lint]
+run = "oxlint --fix"
+
+[tasks."typegen:react-router"]
+run = "react-router typegen"
+
+[tasks.typecheck]
+depends = ["typegen:react-router"]
+run = "tsgo --noEmit"
+
+[tasks.check]
+depends = ["fmt", "lint", "typecheck"]
+
+[tasks."db:bootstrap"]
+run = "mise run db:reset && mise run db:migrate && mise run db:seed"
+
+[tasks."db:migrate"]
+run = "node --env-file=.env db/migrate.ts"
+
+[tasks."db:seed"]
+run = "node --env-file=.env db/seed.ts"
+
+[tasks."db:reset"]
+run = "node --env-file=.env db/reset.ts"

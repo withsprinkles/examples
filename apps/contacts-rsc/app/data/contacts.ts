@@ -1,30 +1,13 @@
 import "server-only";
+import { parseEnv } from "#/utils/parse-env.ts";
 import { sortBy } from "es-toolkit/array";
 import { matchSorter } from "match-sorter";
 import { DatabaseSync } from "node:sqlite";
 import { setTimeout as sleep } from "node:timers/promises";
-import { column as c, ColumnBuilder, table, type TableRow } from "remix/data-table";
 import { Database } from "remix/data-table";
 import { SqliteDatabaseAdapter } from "remix/data-table-sqlite";
 
-import { parseEnv } from "../utils/parse-env.ts";
-import { EnvSchema } from "./schemas.ts";
-
-export let Contacts = table({
-    name: "contacts",
-    columns: {
-        id: c.integer().primaryKey(),
-        first: c.text().notNull(),
-        last: c.text().notNull(),
-        avatar: c.text(),
-        bsky: c.text().notNull(),
-        notes: c.text().notNull(),
-        favorite: c.boolean().default(false),
-        createdAt: c.timestamp().defaultNow() as ColumnBuilder<string>,
-    },
-});
-
-export type Contact = TableRow<typeof Contacts>;
+import { Contacts, EnvSchema, type Contact } from "./schemas.ts";
 
 const { DATABASE_URL } = parseEnv(EnvSchema);
 

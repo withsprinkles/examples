@@ -1,6 +1,7 @@
 import * as s from "remix/data-schema";
 import * as coerce from "remix/data-schema/coerce";
 import * as f from "remix/data-schema/form-data";
+import { column as c, ColumnBuilder, table, type TableRow } from "remix/data-table";
 
 export let EnvSchema = s.object({
     DATABASE_URL: s.string(),
@@ -23,3 +24,19 @@ export let UpdateSchema = f.object({
 });
 
 export let IdSchema = s.object({ contactId: coerce.number() });
+
+export let Contacts = table({
+    name: "contacts",
+    columns: {
+        id: c.integer().primaryKey(),
+        first: c.text().notNull(),
+        last: c.text().notNull(),
+        avatar: c.text(),
+        bsky: c.text().notNull(),
+        notes: c.text().notNull(),
+        favorite: c.boolean().default(false),
+        createdAt: c.timestamp().defaultNow() as ColumnBuilder<string>,
+    },
+});
+
+export type Contact = TableRow<typeof Contacts>;

@@ -1,13 +1,9 @@
-import { Contacts } from "#/data/contacts.ts";
+import { Contacts } from "#/data/schemas.ts";
 import { EnvSchema } from "#/data/schemas.ts";
 import { parseEnv } from "#/utils/parse-env.ts";
 import { DatabaseSync } from "node:sqlite";
 import { Database } from "remix/data-table";
 import { SqliteDatabaseAdapter } from "remix/data-table-sqlite";
-
-// Seeds the local D1 with demo contacts. Idempotent: skips when the
-// `contacts` table already has rows. Schema migrations are applied
-// separately via `wrangler d1 migrations apply --local`. See db/README.md.
 
 const SEED_CONTACTS = [
     {

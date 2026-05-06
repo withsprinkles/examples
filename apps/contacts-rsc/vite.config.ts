@@ -7,28 +7,4 @@ import devtoolsJson from "vite-plugin-devtools-json";
 
 export default defineConfig({
     plugins: [reactRouter(), rsc(), babel({ presets: [reactCompilerPreset()] }), devtoolsJson()],
-    environments: {
-        client: {
-            optimizeDeps: {
-                include: [
-                    "react-router",
-                    "react-router/dom",
-                    "react-router/internal/react-server-client",
-                ],
-            },
-        },
-        rsc: {
-            optimizeDeps: {
-                exclude: ["react-router"],
-            },
-            resolve: {
-                conditions: ["react-server"],
-            },
-        },
-        ssr: {
-            optimizeDeps: {
-                exclude: ["react-router"],
-            },
-        },
-    },
 });

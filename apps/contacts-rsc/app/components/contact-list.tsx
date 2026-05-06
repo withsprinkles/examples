@@ -1,6 +1,6 @@
 "use client";
 
-import type { Contact } from "#/data/contacts.ts";
+import type { Contact } from "#/data/schemas.ts";
 
 import { NavLink } from "react-router";
 

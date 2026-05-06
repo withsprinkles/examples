@@ -1,5 +1,7 @@
 import { fakeNetwork, updateContact } from "#/data/contacts.ts";
+import { FavoriteSchema, IdSchema } from "#/data/schemas.ts";
 import { Form, useFetcher } from "react-router";
+import * as s from "remix/data-schema";
 
 import type { Route } from "./+types/show.tsx";
 
@@ -13,8 +15,10 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
     let formData = await request.formData();
-    return await updateContact(Number.parseInt(params.contactId), {
-        favorite: formData.get("favorite") === "true",
+    let { favorite } = s.parse(FavoriteSchema, formData);
+    let { contactId } = s.parse(IdSchema, params);
+    return await updateContact(contactId, {
+        favorite,
     });
 }
 
@@ -26,6 +30,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
 
     return (
         <div id="contact">
+            <title>{`${contact.first} ${contact.last} | React Router Contacts`}</title>
             <div>
                 <img
                     alt=""

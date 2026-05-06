@@ -2,8 +2,6 @@ import { createContact, getContacts } from "#/data/contacts.ts";
 import { useEffect, type PropsWithChildren } from "react";
 import {
     Form,
-    Links,
-    Meta,
     NavLink,
     Outlet,
     Scripts,
@@ -12,32 +10,16 @@ import {
     useNavigation,
     useSubmit,
 } from "react-router";
+import * as s from "remix/data-schema";
 
 import type { Route } from "./+types/root";
 
+import { QuerySchema } from "./data/schemas";
 import styles from "./index.css?url";
-
-export const meta: Route.MetaFunction = () => [{ title: "React Router Contacts" }];
-
-export const links: Route.LinksFunction = () => [
-    { rel: "stylesheet", href: styles },
-    {
-        rel: "icon",
-        href: "/favicon-light.png",
-        type: "image/png",
-        media: "(prefers-color-scheme: light)",
-    },
-    {
-        rel: "icon",
-        href: "/favicon-dark.png",
-        type: "image/png",
-        media: "(prefers-color-scheme: dark)",
-    },
-];
 
 export async function loader({ request }: Route.LoaderArgs) {
     let url = new URL(request.url);
-    let q = url.searchParams.get("q") ?? undefined;
+    let { q } = s.parse(QuerySchema, url.searchParams);
     let contacts = await getContacts(q);
     return { contacts, q };
 }
@@ -53,8 +35,20 @@ export function Layout({ children }: PropsWithChildren) {
             <head>
                 <meta charSet="utf-8" />
                 <meta content="width=device-width, initial-scale=1" name="viewport" />
-                <Meta />
-                <Links />
+                <link href={styles} rel="stylesheet" />
+                <link
+                    href="/favicon-light.png"
+                    media="(prefers-color-scheme: light)"
+                    rel="icon"
+                    type="image/png"
+                />
+                <link
+                    href="/favicon-dark.png"
+                    media="(prefers-color-scheme: dark)"
+                    rel="icon"
+                    type="image/png"
+                />
+                <title>React Router Contacts</title>
             </head>
             <body>
                 {children}

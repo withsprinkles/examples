@@ -1,5 +1,7 @@
 import { fakeNetwork, updateContact } from "#/data/contacts.ts";
+import { IdSchema, UpdateSchema } from "#/data/schemas.ts";
 import { Form, redirect, useNavigate } from "react-router";
+import * as s from "remix/data-schema";
 
 import type { Route } from "./+types/edit.tsx";
 
@@ -13,8 +15,9 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
     let formData = await request.formData();
-    let updates = Object.fromEntries(formData);
-    await updateContact(Number.parseInt(params.contactId), updates);
+    let updates = s.parse(UpdateSchema, formData);
+    let { contactId } = s.parse(IdSchema, params);
+    await updateContact(contactId, updates);
     return redirect(`/contact/${params.contactId}`);
 }
 
@@ -26,6 +29,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
 
     return (
         <Form id="contact-form" method="post">
+            <title>{`Editing ${contact.first} ${contact.last} | React Router Contacts`}</title>
             <p>
                 <span>Name</span>
                 <input

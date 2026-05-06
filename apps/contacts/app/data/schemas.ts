@@ -22,4 +22,4 @@ export let UpdateSchema = f.object({
     notes: f.field(s.defaulted(s.string(), "")),
 });
 
-export let IdSchema = s.object({ id: coerce.number() });
+export let IdSchema = s.object({ contactId: coerce.number() });

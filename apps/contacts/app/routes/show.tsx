@@ -1,25 +1,28 @@
-import { Form, useFetcher } from "react-router"
-import type { Route } from "./+types/contact.$contactId"
-import { fakeNetwork, updateContact } from "~/lib/contacts.server"
+import { fakeNetwork, updateContact } from "#/data/contacts.ts";
+import { Form, useFetcher } from "react-router";
+
+import type { Route } from "./+types/show.tsx";
 
 export async function loader({ params }: Route.LoaderArgs) {
     // Since we're being smart and using `matches` in the component instead of,
     // `getContact()` here we don't see the loading states, so we have to fake
     // the network latency dirctly in this loader.
-    await fakeNetwork(`contact:${params.contactId}`)
-    return null
+    await fakeNetwork(`contact:${params.contactId}`);
+    return null;
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-    const formData = await request.formData()
+    let formData = await request.formData();
     return await updateContact(Number.parseInt(params.contactId), {
         favorite: formData.get("favorite") === "true",
-    })
+    });
 }
 
 export default function Component({ matches, params }: Route.ComponentProps) {
-    const contact = matches[0].data.contacts.find(c => c.id === Number.parseInt(params.contactId))!
-    const hasAvatar = !!contact.avatar
+    let contact = matches[0].loaderData.contacts.find(
+        c => c.id === Number.parseInt(params.contactId),
+    )!;
+    let hasAvatar = !!contact.avatar;
 
     return (
         <div id="contact">
@@ -70,7 +73,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
                         method="post"
                         onSubmit={event => {
                             if (!confirm("Please confirm you want to delete this record.")) {
-                                event.preventDefault()
+                                event.preventDefault();
                             }
                         }}
                     >
@@ -79,12 +82,12 @@ export default function Component({ matches, params }: Route.ComponentProps) {
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 function Favorite(props: { favorite: boolean }) {
-    const { Form, formData } = useFetcher()
-    const favorite = formData ? formData.get("favorite") === "true" : props.favorite
+    let { Form, formData } = useFetcher();
+    let favorite = formData ? formData.get("favorite") === "true" : props.favorite;
 
     return (
         <Form method="post">
@@ -97,5 +100,5 @@ function Favorite(props: { favorite: boolean }) {
                 {favorite ? "★" : "☆"}
             </button>
         </Form>
-    )
+    );
 }

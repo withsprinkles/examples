@@ -1,6 +1,5 @@
-import { useEffect, type PropsWithChildren } from "react"
-import styles from "./index.css?url"
-import { createContact, getContacts } from "./lib/contacts.server"
+import { createContact, getContacts } from "#/data/contacts.ts";
+import { useEffect, type PropsWithChildren } from "react";
 import {
     Form,
     Links,
@@ -12,10 +11,13 @@ import {
     useNavigate,
     useNavigation,
     useSubmit,
-} from "react-router"
-import type { Route } from "./+types/root"
+} from "react-router";
 
-export const meta: Route.MetaFunction = () => [{ title: "React Router Contacts" }]
+import type { Route } from "./+types/root";
+
+import styles from "./index.css?url";
+
+export const meta: Route.MetaFunction = () => [{ title: "React Router Contacts" }];
 
 export const links: Route.LinksFunction = () => [
     { rel: "stylesheet", href: styles },
@@ -31,18 +33,18 @@ export const links: Route.LinksFunction = () => [
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
     },
-]
+];
 
 export async function loader({ request }: Route.LoaderArgs) {
-    const url = new URL(request.url)
-    const q = url.searchParams.get("q") ?? undefined
-    const contacts = await getContacts(q)
-    return { contacts, q }
+    let url = new URL(request.url);
+    let q = url.searchParams.get("q") ?? undefined;
+    let contacts = await getContacts(q);
+    return { contacts, q };
 }
 
 export async function action() {
-    const contact = await createContact()
-    return { contact }
+    let contact = await createContact();
+    return { contact };
 }
 
 export function Layout({ children }: PropsWithChildren) {
@@ -60,25 +62,25 @@ export function Layout({ children }: PropsWithChildren) {
                 <Scripts />
             </body>
         </html>
-    )
+    );
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
-    const navigation = useNavigation()
-    const { contacts, q } = loaderData
+    let navigation = useNavigation();
+    let { contacts, q } = loaderData;
 
-    const searching = Boolean(
+    let searching = Boolean(
         navigation.location && new URLSearchParams(navigation.location.search).has("q"),
-    )
+    );
 
-    const submit = useSubmit()
-    const navigate = useNavigate()
+    let submit = useSubmit();
+    let navigate = useNavigate();
 
     useEffect(() => {
         if (document) {
-            document.querySelector<HTMLInputElement>("#q")!.value = q ?? ""
+            document.querySelector<HTMLInputElement>("#q")!.value = q ?? "";
         }
-    }, [q])
+    }, [q]);
 
     return (
         <div id="root">
@@ -95,13 +97,13 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                             onInput={event => {
                                 // Remove empty query params when value is empty
                                 if (!event.currentTarget.value) {
-                                    navigate("/")
-                                    return
+                                    navigate("/");
+                                    return;
                                 }
-                                const isFirstSearch = q === undefined
+                                let isFirstSearch = q === undefined;
                                 submit(event.currentTarget.form, {
                                     replace: !isFirstSearch,
-                                })
+                                });
                             }}
                             placeholder="Search"
                             type="search"
@@ -147,5 +149,5 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                 <Outlet />
             </div>
         </div>
-    )
+    );
 }

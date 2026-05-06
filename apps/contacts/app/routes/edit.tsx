@@ -1,25 +1,28 @@
-import { Form, redirect, useNavigate } from "react-router"
-import type { Route } from "./+types/contact.$contactId_.edit"
-import { fakeNetwork, updateContact } from "~/lib/contacts.server"
+import { fakeNetwork, updateContact } from "#/data/contacts.ts";
+import { Form, redirect, useNavigate } from "react-router";
+
+import type { Route } from "./+types/edit.tsx";
 
 export async function loader({ params }: Route.LoaderArgs) {
     // Since we're being smart and using `matches` in the component instead of,
     // `getContact()` here we don't see the loading states, so we have to fake
     // the network latency dirctly in this loader.
-    await fakeNetwork(`contact:${params.contactId}`)
-    return null
+    await fakeNetwork(`contact:${params.contactId}`);
+    return null;
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-    const formData = await request.formData()
-    const updates = Object.fromEntries(formData)
-    await updateContact(Number.parseInt(params.contactId), updates)
-    return redirect(`/contact/${params.contactId}`)
+    let formData = await request.formData();
+    let updates = Object.fromEntries(formData);
+    await updateContact(Number.parseInt(params.contactId), updates);
+    return redirect(`/contact/${params.contactId}`);
 }
 
 export default function Component({ matches, params }: Route.ComponentProps) {
-    const contact = matches[0].data.contacts.find(c => c.id === Number.parseInt(params.contactId))!
-    const navigate = useNavigate()
+    let contact = matches[0].loaderData.contacts.find(
+        c => c.id === Number.parseInt(params.contactId),
+    )!;
+    let navigate = useNavigate();
 
     return (
         <Form id="contact-form" method="post">
@@ -70,5 +73,5 @@ export default function Component({ matches, params }: Route.ComponentProps) {
                 </button>
             </p>
         </Form>
-    )
+    );
 }

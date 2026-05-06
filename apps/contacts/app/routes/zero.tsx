@@ -5,5 +5,5 @@ export default function Component() {
             <br />
             Check out <a href="https://reactrouter.com/home">the docs at reactrouter.com</a>.
         </p>
-    )
+    );
 }

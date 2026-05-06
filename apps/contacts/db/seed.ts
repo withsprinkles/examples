@@ -1,51 +1,69 @@
-import { Contact, db } from "~/lib/db"
+import { Contacts } from "#/data/contacts.ts";
+import { EnvSchema } from "#/data/schemas.ts";
+import { parseEnv } from "#/utils/parse-env.ts";
+import { DatabaseSync } from "node:sqlite";
+import { Database } from "remix/data-table";
+import { SqliteDatabaseAdapter } from "remix/data-table-sqlite";
 
-const contacts = [
+// Seeds the local D1 with demo contacts. Idempotent: skips when the
+// `contacts` table already has rows. Schema migrations are applied
+// separately via `wrangler d1 migrations apply --local`. See db/README.md.
+
+const SEED_CONTACTS = [
     {
-        id: 1,
         first: "Brooks",
         last: "Lybrand",
         avatar: "https://cdn.bsky.app/img/avatar/plain/did:plc:l7sltcx6yitxew2vgcrn72ge/bafkreibg6v7njo3pxsmzxa262j6ikw4i66umygdawz5iduuu3h4tfyprbm@jpeg",
         bsky: "brookslybrand.bsky.social",
     },
     {
-        id: 2,
         first: "Mark",
         last: "Dalgleish",
         avatar: "https://cdn.bsky.app/img/avatar/plain/did:plc:hucjy724rz245jjd3ismnwcy/bafkreifecuk7zywjcxraqr75ua7hp3jtj2g5zygifh3cmzbe3hpsnqr7ye@jpeg",
         bsky: "markdalgleish.com",
     },
     {
-        id: 3,
         first: "Pedro",
         last: "Cattori",
         avatar: "https://cdn.bsky.app/img/avatar/plain/did:plc:6zwkx24n4vucdcfgzbwzfy57/bafkreihecdr73d63xajbsrr525j7mih4dymzc5scaz7fr6qtyuouenrheu@jpeg",
         bsky: "pedrocattori.com",
     },
     {
-        id: 4,
         first: "Kent C.",
         last: "Dodds",
         avatar: "https://cdn.bsky.app/img/avatar/plain/did:plc:xzefkiajzjmmyp6zq6ftczg3/bafkreicjzokch3d33ikmot252ilfmlzfnqv6vbhonzcftdslmql3db5tfm@jpeg",
         bsky: "kentcdodds.com",
     },
     {
-        id: 5,
         first: "Jacob",
         last: "Ebey",
         avatar: "https://cdn.bsky.app/img/avatar/plain/did:plc:twegdcgytckr5cxm57gyruxa/bafkreidx3bmu6wprocniiyrpwnpwljky6rat7bjccxxoc66ncybhzt5qxu@jpeg",
         bsky: "ebey.bsky.social",
     },
-]
+];
 
-export async function seed() {
-    try {
-        await db.insert(Contact).values(contacts).onConflictDoUpdate({
-            target: Contact.id,
-            set: Contact,
-        })
-    } catch (e) {
-        console.error(e)
-        // process.exit(1);
-    }
+const { DATABASE_URL } = parseEnv(EnvSchema);
+
+let sqlite = new DatabaseSync(DATABASE_URL);
+let adapter = new SqliteDatabaseAdapter(sqlite);
+let db = new Database(adapter);
+
+let count = await db.count(Contacts);
+if (count > 0) {
+    console.log(`Seed skipped: ${count} contact(s) already present.`);
+    process.exit(0);
 }
+
+for (let contact of SEED_CONTACTS) {
+    await db.create(Contacts, {
+        first: contact.first,
+        last: contact.last,
+        avatar: contact.avatar,
+        bsky: contact.bsky,
+        notes: "",
+        favorite: false,
+        createdAt: `${Date.now()}`,
+    });
+}
+
+console.log(`Seeded ${SEED_CONTACTS.length} contact(s).`);

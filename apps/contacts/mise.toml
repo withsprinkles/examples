@@ -13,7 +13,7 @@ fi
 """
 
 [tasks.dev]
-depends = ["db:migrate", "db:seed"]
+depends = ["db:bootstrap"]
 run = "vite dev"
 
 [tasks.build]
@@ -40,6 +40,9 @@ run = "tsgo --noEmit"
 
 [tasks.check]
 depends = ["fmt", "lint", "typecheck"]
+
+[tasks."db:bootstrap"]
+run = "mise run db:reset && mise run db:migrate && mise run db:seed"
 
 [tasks."db:migrate"]
 run = "node --env-file=.env db/migrate.ts"

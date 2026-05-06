@@ -13,4 +13,4 @@
 .output
 
 # Database
-/db.sqlite3
+db/db.sqlite3

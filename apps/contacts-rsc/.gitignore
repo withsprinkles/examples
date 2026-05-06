@@ -1,0 +1,16 @@
+.env
+
+.DS_Store
+.env
+/node_modules/
+*.tsbuildinfo
+
+# React Router
+/.react-router/
+/.cache
+/build
+/public/build
+.output
+
+# Database
+db/db.sqlite3

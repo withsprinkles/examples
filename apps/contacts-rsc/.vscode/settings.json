@@ -1,0 +1,10 @@
+{
+    "files.exclude": {
+        "**/.react-router": true
+    },
+    "explorer.fileNesting.patterns": {
+        "vite.config.*": ".oxfmtrc*, .oxlintrc*, react-router.config.*",
+        "package.json": "pnpm-lock.yaml, tsconfig.json",
+        "README*": "AGENTS*, CLAUDE*"
+    }
+}

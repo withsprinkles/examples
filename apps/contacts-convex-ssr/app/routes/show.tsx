@@ -1,32 +1,52 @@
-import { fakeNetwork, updateContact } from "#/data/contacts.ts";
 import { FavoriteSchema, IdSchema } from "#/data/schemas.ts";
+import { contactQuery } from "#/lib/queries.ts";
+import { getConvexHttpClient } from "#/tanstack-query-integration/middleware.ts";
+import {
+    createPreloader,
+    type QueryLoaderArgs,
+} from "#/tanstack-query-integration/query-preloader.ts";
+import { useQuery } from "@tanstack/react-query";
+import { use } from "react";
 import { Form, useFetcher } from "react-router";
 import * as s from "remix/data-schema";
 
+import type { Id } from "../../convex/_generated/dataModel.js";
 import type { Route } from "./+types/show.tsx";
 
-export async function loader({ params }: Route.LoaderArgs) {
-    // Since we're being smart and using `matches` in the component instead of,
-    // `getContact()` here we don't see the loading states, so we have to fake
-    // the network latency dirctly in this loader.
-    await fakeNetwork(`contact:${params.contactId}`);
-    return null;
-}
+import { api } from "../../convex/_generated/api.js";
 
-export async function action({ request, params }: Route.ActionArgs) {
+export const loader = createPreloader(
+    async ({ params, preload }: QueryLoaderArgs<Route.LoaderArgs>) => {
+        let { contactId } = s.parse(IdSchema, params);
+        await preload(api.contacts.get, { id: contactId as Id<"contacts"> });
+    },
+);
+
+export async function action({ request, context, params }: Route.ActionArgs) {
     let formData = await request.formData();
     let { favorite } = s.parse(FavoriteSchema, formData);
     let { contactId } = s.parse(IdSchema, params);
-    return await updateContact(contactId, {
+    let convex = getConvexHttpClient(context);
+    await convex.mutation(api.contacts.setFavorite, {
+        id: contactId as Id<"contacts">,
         favorite,
     });
+    return null;
 }
 
-export default function Component({ matches, params }: Route.ComponentProps) {
-    let contact = matches[0].loaderData.contacts.find(
-        c => c.id === Number.parseInt(params.contactId),
-    )!;
-    let hasAvatar = !!contact.avatar;
+export default function Component({ params }: Route.ComponentProps) {
+    let { promise } = useQuery(contactQuery(params.contactId as Id<"contacts">));
+    let contact = use(promise);
+
+    if (!contact) {
+        return (
+            <div id="contact">
+                <i>Contact not found.</i>
+            </div>
+        );
+    }
+
+    let hasAvatar = Boolean(contact.avatar);
 
     return (
         <div id="contact">
@@ -52,7 +72,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
                     ) : (
                         <i>No Name</i>
                     )}{" "}
-                    <Favorite favorite={contact.favorite!} />
+                    <Favorite favorite={contact.favorite} />
                 </h1>
 
                 {contact.bsky && (

@@ -13,8 +13,15 @@ fi
 """
 
 [tasks.dev]
-depends = ["db:bootstrap"]
 run = "vite dev"
+
+[tasks."convex:dev"]
+description = "Run the Convex dev backend (regenerates types under convex/_generated)."
+run = "convex dev"
+
+[tasks."convex:seed"]
+description = "Seed the Convex deployment with demo contacts."
+run = "convex run seed:run"
 
 [tasks.build]
 run = "vite build"
@@ -40,15 +47,3 @@ run = "tsgo --noEmit"
 
 [tasks.check]
 depends = ["fmt", "lint", "typecheck"]
-
-[tasks."db:bootstrap"]
-run = "mise run db:reset && mise run db:migrate && mise run db:seed"
-
-[tasks."db:migrate"]
-run = "node --env-file=.env db/migrate.ts"
-
-[tasks."db:seed"]
-run = "node --env-file=.env db/seed.ts"
-
-[tasks."db:reset"]
-run = "node --env-file=.env db/reset.ts"

@@ -1,5 +1,22 @@
-import { createContact, getContacts } from "#/data/contacts.ts";
-import { useEffect, type PropsWithChildren } from "react";
+import { QuerySchema } from "#/data/schemas.ts";
+import { createConvexQueryClient } from "#/lib/client.ts";
+import { contactsQuery } from "#/lib/queries.ts";
+import {
+    getConvexHttpClient,
+    setConvexHttpClient,
+    setQueryClient,
+} from "#/tanstack-query-integration/middleware.ts";
+import {
+    createPreloader,
+    type QueryLoaderArgs,
+    useDehydratedState,
+} from "#/tanstack-query-integration/query-preloader.ts";
+import { HydrationBoundary, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { ConvexHttpClient } from "convex/browser";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { sortBy } from "es-toolkit/array";
+import { matchSorter } from "match-sorter";
+import { type PropsWithChildren, use, useEffect, useState } from "react";
 import {
     Form,
     NavLink,
@@ -10,23 +27,36 @@ import {
     useNavigation,
     useSubmit,
 } from "react-router";
+import { assert } from "remix/assert";
 import * as s from "remix/data-schema";
 
 import type { Route } from "./+types/root";
 
-import { QuerySchema } from "./data/schemas";
+import { api } from "../convex/_generated/api.js";
 import styles from "./index.css?url";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    let url = new URL(request.url);
-    let { q } = s.parse(QuerySchema, url.searchParams);
-    let contacts = await getContacts(q);
-    return { contacts, q };
-}
+// Vite makes `VITE_CONVEX_URL` available on the server build as well, so we can
+// share one environment variable between server and client setup.
+assert(import.meta.env.VITE_CONVEX_URL, "VITE_CONVEX_URL must be set (see .env.local)");
 
-export async function action() {
-    let contact = await createContact();
-    return { contact };
+export const middleware = [
+    setQueryClient(() => createConvexQueryClient(import.meta.env.VITE_CONVEX_URL).queryClient),
+    setConvexHttpClient(() => new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL)),
+];
+
+export const loader = createPreloader(
+    async ({ request, preload }: QueryLoaderArgs<Route.LoaderArgs>) => {
+        let url = new URL(request.url);
+        let { q } = s.parse(QuerySchema, url.searchParams);
+        await preload(api.contacts.list, {});
+        return { q };
+    },
+);
+
+export async function action({ context }: Route.ActionArgs) {
+    let convex = getConvexHttpClient(context);
+    let id = await convex.mutation(api.contacts.create, {});
+    return { id };
 }
 
 export function Layout({ children }: PropsWithChildren) {
@@ -60,8 +90,35 @@ export function Layout({ children }: PropsWithChildren) {
 }
 
 export default function Component({ loaderData }: Route.ComponentProps) {
+    // One-time per-tab Convex client + QueryClient. The QueryClient must be
+    // built with the convex `queryFn`/`hashFn` defaults to keep keys aligned
+    // with whatever the server dehydrated.
+    let [{ convex, queryClient }] = useState(() => {
+        let convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL);
+        let { queryClient, convexQueryClient } = createConvexQueryClient(convex);
+        convexQueryClient.connect(queryClient);
+        return { convex, queryClient };
+    });
+    let dehydratedState = useDehydratedState();
+
+    return (
+        <ConvexProvider client={convex}>
+            <QueryClientProvider client={queryClient}>
+                <HydrationBoundary state={dehydratedState}>
+                    <Sidebar q={loaderData.q} />
+                </HydrationBoundary>
+            </QueryClientProvider>
+        </ConvexProvider>
+    );
+}
+
+function Sidebar({ q }: { q: string | undefined }) {
     let navigation = useNavigation();
-    let { contacts, q } = loaderData;
+    let { promise } = useQuery(contactsQuery());
+    let contacts = use(promise) ?? [];
+
+    let list = q ? matchSorter(contacts, q, { keys: ["first", "last"] }) : contacts;
+    let filtered = sortBy(list, ["last", "_creationTime"]);
 
     let searching = Boolean(
         navigation.location && new URLSearchParams(navigation.location.search).has("q"),
@@ -71,9 +128,8 @@ export default function Component({ loaderData }: Route.ComponentProps) {
     let navigate = useNavigate();
 
     useEffect(() => {
-        if (document) {
-            document.querySelector<HTMLInputElement>("#q")!.value = q ?? "";
-        }
+        let input = document.querySelector<HTMLInputElement>("#q");
+        if (input) input.value = q ?? "";
     }, [q]);
 
     return (
@@ -110,15 +166,15 @@ export default function Component({ loaderData }: Route.ComponentProps) {
                     </Form>
                 </div>
                 <nav>
-                    {contacts.length ? (
+                    {filtered.length ? (
                         <ul>
-                            {contacts.map(contact => (
-                                <li key={contact.id}>
+                            {filtered.map(contact => (
+                                <li key={contact._id}>
                                     <NavLink
                                         className={({ isActive, isPending }) =>
                                             isActive ? "active" : isPending ? "pending" : ""
                                         }
-                                        to={`contact/${contact.id}`}
+                                        to={`contact/${contact._id}`}
                                     >
                                         {contact.first || contact.last ? (
                                             <>

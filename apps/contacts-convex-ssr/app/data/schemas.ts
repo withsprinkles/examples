@@ -2,10 +2,6 @@ import * as s from "remix/data-schema";
 import * as coerce from "remix/data-schema/coerce";
 import * as f from "remix/data-schema/form-data";
 
-export let EnvSchema = s.object({
-    DATABASE_URL: s.string(),
-});
-
 export let QuerySchema = f.object({
     q: f.field(s.union([s.string(), s.undefined_()])),
 });
@@ -22,4 +18,5 @@ export let UpdateSchema = f.object({
     notes: f.field(s.defaulted(s.string(), "")),
 });
 
-export let IdSchema = s.object({ contactId: coerce.number() });
+// Convex document ids are opaque strings; treat as a non-empty string at the boundary.
+export let IdSchema = s.object({ contactId: s.string() });

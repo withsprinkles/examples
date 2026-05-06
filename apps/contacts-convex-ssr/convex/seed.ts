@@ -1,13 +1,4 @@
-import { Contacts } from "#/data/contacts.ts";
-import { EnvSchema } from "#/data/schemas.ts";
-import { parseEnv } from "#/utils/parse-env.ts";
-import { DatabaseSync } from "node:sqlite";
-import { Database } from "remix/data-table";
-import { SqliteDatabaseAdapter } from "remix/data-table-sqlite";
-
-// Seeds the local D1 with demo contacts. Idempotent: skips when the
-// `contacts` table already has rows. Schema migrations are applied
-// separately via `wrangler d1 migrations apply --local`. See db/README.md.
+import { internalMutation } from "./_generated/server.js";
 
 const SEED_CONTACTS = [
     {
@@ -42,28 +33,29 @@ const SEED_CONTACTS = [
     },
 ];
 
-const { DATABASE_URL } = parseEnv(EnvSchema);
+/**
+ * Seed the contacts table with demo data. Idempotent: skips if any contacts
+ * already exist. Run with `npx convex run seed:run`.
+ */
+export const run = internalMutation({
+    args: {},
+    handler: async ctx => {
+        let existing = await ctx.db.query("contacts").take(1);
+        if (existing.length > 0) {
+            console.log("Seed skipped: contacts already present.");
+            return;
+        }
 
-let sqlite = new DatabaseSync(DATABASE_URL);
-let adapter = new SqliteDatabaseAdapter(sqlite);
-let db = new Database(adapter);
-
-let count = await db.count(Contacts);
-if (count > 0) {
-    console.log(`Seed skipped: ${count} contact(s) already present.`);
-    process.exit(0);
-}
-
-for (let contact of SEED_CONTACTS) {
-    await db.create(Contacts, {
-        first: contact.first,
-        last: contact.last,
-        avatar: contact.avatar,
-        bsky: contact.bsky,
-        notes: "",
-        favorite: false,
-        createdAt: `${Date.now()}`,
-    });
-}
-
-console.log(`Seeded ${SEED_CONTACTS.length} contact(s).`);
+        for (let contact of SEED_CONTACTS) {
+            await ctx.db.insert("contacts", {
+                first: contact.first,
+                last: contact.last,
+                avatar: contact.avatar,
+                bsky: contact.bsky,
+                notes: "",
+                favorite: false,
+            });
+        }
+        console.log(`Seeded ${SEED_CONTACTS.length} contact(s).`);
+    },
+});

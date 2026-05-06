@@ -1,31 +1,51 @@
-import { fakeNetwork, updateContact } from "#/data/contacts.ts";
 import { IdSchema, UpdateSchema } from "#/data/schemas.ts";
+import { contactQuery } from "#/lib/queries.ts";
+import { getConvexHttpClient } from "#/tanstack-query-integration/middleware.ts";
+import {
+    createPreloader,
+    type QueryLoaderArgs,
+} from "#/tanstack-query-integration/query-preloader.ts";
+import { useQuery } from "@tanstack/react-query";
+import { use } from "react";
 import { Form, redirect, useNavigate } from "react-router";
 import * as s from "remix/data-schema";
 
+import type { Id } from "../../convex/_generated/dataModel.js";
 import type { Route } from "./+types/edit.tsx";
 
-export async function loader({ params }: Route.LoaderArgs) {
-    // Since we're being smart and using `matches` in the component instead of,
-    // `getContact()` here we don't see the loading states, so we have to fake
-    // the network latency dirctly in this loader.
-    await fakeNetwork(`contact:${params.contactId}`);
-    return null;
-}
+import { api } from "../../convex/_generated/api.js";
 
-export async function action({ request, params }: Route.ActionArgs) {
+export const loader = createPreloader(
+    async ({ params, preload }: QueryLoaderArgs<Route.LoaderArgs>) => {
+        let { contactId } = s.parse(IdSchema, params);
+        await preload(api.contacts.get, { id: contactId as Id<"contacts"> });
+    },
+);
+
+export async function action({ request, context, params }: Route.ActionArgs) {
     let formData = await request.formData();
     let updates = s.parse(UpdateSchema, formData);
     let { contactId } = s.parse(IdSchema, params);
-    await updateContact(contactId, updates);
+    let convex = getConvexHttpClient(context);
+    await convex.mutation(api.contacts.update, {
+        id: contactId as Id<"contacts">,
+        ...updates,
+    });
     return redirect(`/contact/${params.contactId}`);
 }
 
-export default function Component({ matches, params }: Route.ComponentProps) {
-    let contact = matches[0].loaderData.contacts.find(
-        c => c.id === Number.parseInt(params.contactId),
-    )!;
+export default function Component({ params }: Route.ComponentProps) {
+    let { promise } = useQuery(contactQuery(params.contactId as Id<"contacts">));
+    let contact = use(promise);
     let navigate = useNavigate();
+
+    if (!contact) {
+        return (
+            <div id="contact">
+                <i>Contact not found.</i>
+            </div>
+        );
+    }
 
     return (
         <Form id="contact-form" method="post">
@@ -34,14 +54,14 @@ export default function Component({ matches, params }: Route.ComponentProps) {
                 <span>Name</span>
                 <input
                     aria-label="First name"
-                    defaultValue={contact.first ?? undefined}
+                    defaultValue={contact.first}
                     name="first"
                     placeholder="First"
                     type="text"
                 />
                 <input
                     aria-label="Last name"
-                    defaultValue={contact.last ?? undefined}
+                    defaultValue={contact.last}
                     name="last"
                     placeholder="Last"
                     type="text"
@@ -50,7 +70,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
             <label>
                 <span>Bluesky</span>
                 <input
-                    defaultValue={contact.bsky ?? undefined}
+                    defaultValue={contact.bsky}
                     name="bsky"
                     placeholder="jay.bsky.team"
                     type="text"
@@ -68,7 +88,7 @@ export default function Component({ matches, params }: Route.ComponentProps) {
             </label>
             <label>
                 <span>Notes</span>
-                <textarea defaultValue={contact.notes ?? undefined} name="notes" rows={6} />
+                <textarea defaultValue={contact.notes} name="notes" rows={6} />
             </label>
             <p>
                 <button type="submit">Save</button>

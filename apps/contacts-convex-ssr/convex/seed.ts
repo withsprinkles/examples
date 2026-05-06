@@ -37,7 +37,7 @@ const SEED_CONTACTS = [
  * Seed the contacts table with demo data. Idempotent: skips if any contacts
  * already exist. Run with `npx convex run seed:run`.
  */
-export const run = internalMutation({
+export let run = internalMutation({
     args: {},
     handler: async ctx => {
         let existing = await ctx.db.query("contacts").take(1);

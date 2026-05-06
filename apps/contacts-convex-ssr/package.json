@@ -3,7 +3,8 @@
     "type": "module",
     "sideEffects": false,
     "imports": {
-        "#/*": "./app/*"
+        "#/*": "./app/*",
+        "#convex/*": "./convex/*"
     },
     "dependencies": {
         "@convex-dev/react-query": "^0.1.0",

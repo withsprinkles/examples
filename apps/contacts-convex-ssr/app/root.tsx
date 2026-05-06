@@ -1,16 +1,12 @@
+import { contactsQuery } from "#/data/queries.js";
 import { QuerySchema } from "#/data/schemas.ts";
-import { createConvexQueryClient } from "#/lib/client.ts";
-import { contactsQuery } from "#/lib/queries.ts";
-import {
-    getConvexHttpClient,
-    setConvexHttpClient,
-    setQueryClient,
-} from "#/tanstack-query-integration/middleware.ts";
+import { createConvexQueryClient } from "#/utils/client.js";
+import { getConvexHttpClient, setConvexHttpClient, setQueryClient } from "#/utils/middleware.ts";
 import {
     createPreloader,
     type QueryLoaderArgs,
     useDehydratedState,
-} from "#/tanstack-query-integration/query-preloader.ts";
+} from "#/utils/query-preloader.ts";
 import { HydrationBoundary, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { ConvexHttpClient } from "convex/browser";
 import { ConvexProvider, ConvexReactClient } from "convex/react";

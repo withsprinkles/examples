@@ -1,12 +1,12 @@
+import type { Id } from "#convex/_generated/dataModel.js";
+
 import { IdSchema } from "#/data/schemas.ts";
-import { getConvexHttpClient } from "#/tanstack-query-integration/middleware.ts";
+import { getConvexHttpClient } from "#/utils/middleware.ts";
+import { api } from "#convex/_generated/api.js";
 import { redirect } from "react-router";
 import * as s from "remix/data-schema";
 
-import type { Id } from "../../convex/_generated/dataModel.js";
 import type { Route } from "./+types/destroy.tsx";
-
-import { api } from "../../convex/_generated/api.js";
 
 export async function action({ context, params }: Route.ActionArgs) {
     let { contactId } = s.parse(IdSchema, params);

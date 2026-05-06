@@ -1,19 +1,16 @@
+import type { Id } from "#convex/_generated/dataModel.js";
+
+import { contactQuery } from "#/data/queries.ts";
 import { FavoriteSchema, IdSchema } from "#/data/schemas.ts";
-import { contactQuery } from "#/lib/queries.ts";
-import { getConvexHttpClient } from "#/tanstack-query-integration/middleware.ts";
-import {
-    createPreloader,
-    type QueryLoaderArgs,
-} from "#/tanstack-query-integration/query-preloader.ts";
+import { getConvexHttpClient } from "#/utils/middleware.ts";
+import { createPreloader, type QueryLoaderArgs } from "#/utils/query-preloader.ts";
+import { api } from "#convex/_generated/api.js";
 import { useQuery } from "@tanstack/react-query";
 import { use } from "react";
 import { Form, useFetcher } from "react-router";
 import * as s from "remix/data-schema";
 
-import type { Id } from "../../convex/_generated/dataModel.js";
 import type { Route } from "./+types/show.tsx";
-
-import { api } from "../../convex/_generated/api.js";
 
 export const loader = createPreloader(
     async ({ params, preload }: QueryLoaderArgs<Route.LoaderArgs>) => {

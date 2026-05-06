@@ -5,7 +5,7 @@ import { mutation, query } from "./_generated/server.js";
 const AT_PATTERN = /^@+/;
 
 /** List every contact, ordered by creation time. Filtering happens on the client. */
-export const list = query({
+export let list = query({
     args: {},
     handler: async ctx => {
         return await ctx.db.query("contacts").order("desc").collect();
@@ -13,7 +13,7 @@ export const list = query({
 });
 
 /** Fetch a single contact by id. Returns `null` if the document doesn't exist. */
-export const get = query({
+export let get = query({
     args: { id: v.id("contacts") },
     handler: async (ctx, args) => {
         return await ctx.db.get(args.id);
@@ -21,7 +21,7 @@ export const get = query({
 });
 
 /** Create an empty contact and return its new id. */
-export const create = mutation({
+export let create = mutation({
     args: {},
     handler: async ctx => {
         return await ctx.db.insert("contacts", {
@@ -35,7 +35,7 @@ export const create = mutation({
 });
 
 /** Update mutable contact fields. */
-export const update = mutation({
+export let update = mutation({
     args: {
         id: v.id("contacts"),
         first: v.optional(v.string()),
@@ -55,7 +55,7 @@ export const update = mutation({
 });
 
 /** Toggle the favorite flag on a contact. */
-export const setFavorite = mutation({
+export let setFavorite = mutation({
     args: { id: v.id("contacts"), favorite: v.boolean() },
     handler: async (ctx, args) => {
         await ctx.db.patch(args.id, { favorite: args.favorite });
@@ -63,7 +63,7 @@ export const setFavorite = mutation({
 });
 
 /** Delete a contact by id. */
-export const remove = mutation({
+export let remove = mutation({
     args: { id: v.id("contacts") },
     handler: async (ctx, args) => {
         await ctx.db.delete(args.id);

@@ -1,0 +1,60 @@
+[tools]
+node = "24"
+pnpm = "latest"
+
+[env]
+_.path = ['{{config_root}}/node_modules/.bin']
+
+[tasks."dev:vite"]
+description = "Run the Vite development server"
+run = "vite dev --host"
+
+[tasks."dev:convex"]
+description = "Run the Convex development server"
+run = "convex dev"
+
+[tasks.dev]
+description = "Run the development server"
+depends = "dev:*"
+
+[tasks.build]
+description = "Build the app"
+sources = ["pnpm-lock.yaml", "vite.config.ts", "tsconfig.ts", "app/**/*.{ts,tsx,css}"]
+outputs = ["build"]
+run = "vite build"
+
+[tasks.preview]
+description = "Preview the built application"
+run = "vite preview"
+
+[tasks.fmt]
+description = "Format the entire project"
+run = "oxfmt"
+
+[tasks."fmt:check"]
+description = "Format the entire project"
+run = "oxfmt --check"
+
+[tasks.lint]
+description = "Lint the entire project"
+run = "biome lint --write --unsafe ."
+
+[tasks."lint:check"]
+description = "Lint the entire project"
+run = "biome lint --unsafe ."
+
+[tasks.typecheck]
+description = "Typecheck the entire project"
+run = "tsgo --noEmit"
+
+[tasks.test]
+description = "Run tests"
+run = "vitest run"
+
+[tasks."test:watch"]
+description = "Run tests in watch mode"
+run = "vitest"
+
+[tasks.check]
+description = "Check the entire project for correctness"
+depends = ["fmt:check", "lint:check", "typecheck", "test"]
